@@ -1,14 +1,11 @@
-// server.js
-// Main Express server for WEB322 Assignment 3
-
 const express = require("express");
 const mongoose = require("mongoose");
 const session = require("client-sessions");
 const path = require("path");
 const dotenv = require("dotenv");
-const { sequelize } = require("./models"); // Sequelize instance
+const { sequelize } = require("./models");
 
-// Load .env
+// Load environment variables
 dotenv.config();
 
 const authRoutes = require("./routes/auth");
@@ -16,39 +13,71 @@ const taskRoutes = require("./routes/tasks");
 
 const app = express();
 
-// Middleware to parse form data
+// ---------------------
+// Middleware
+// ---------------------
 app.use(express.urlencoded({ extended: true }));
-
-// Serve static files (CSS)
 app.use(express.static(path.join(__dirname, "public")));
 
-// Set view engine (EJS)
 app.set("view engine", "ejs");
 
-// Configure client sessions
+// Sessions (works on Vercel)
 app.use(
   session({
     cookieName: "session",
     secret: process.env.SESSION_SECRET,
-    duration: 30 * 60 * 1000 // 30 minutes
+    duration: 30 * 60 * 1000,
+    activeDuration: 5 * 60 * 1000
   })
 );
 
-// --- Connect MongoDB (Users Collection) ---
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log("MongoDB error:", err));
+// ---------------------
+// MongoDB Connection
+// ---------------------
+let mongoConnected = false;
+async function connectMongo() {
+  if (mongoConnected) return;
 
-// --- Connect PostgreSQL (Tasks Table) ---
-sequelize
-  .sync()
-  .then(() => console.log("PostgreSQL connected"))
-  .catch((err) => console.log("Postgres error:", err));
+  try {
+    await mongoose.connect(process.env.MONGO_URI, { });
+    console.log("MongoDB connected");
+    mongoConnected = true;
+  } catch (err) {
+    console.log("MongoDB error:", err);
+  }
+}
 
+// ---------------------
+// PostgreSQL Connection
+// ---------------------
+async function connectPostgres() {
+  try {
+    await sequelize.sync();
+    console.log("PostgreSQL connected");
+  } catch (err) {
+    console.log("Postgres error:", err);
+  }
+}
+
+// Connect databases on first request (Serverless Safe)
+app.use(async (req, res, next) => {
+  await connectMongo();
+  await connectPostgres();
+  next();
+});
+
+// ---------------------
 // Routes
+// ---------------------
 app.use("/", authRoutes);
 app.use("/", taskRoutes);
 
-// Start Server
-app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+// ---------------------
+// Export for Vercel
+// ---------------------
+module.exports = app;
+
+// Localhost only
+if (process.env.NODE_ENV !== "production") {
+  app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+}
