@@ -1,0 +1,24 @@
+<h2>Your Tasks</h2>
+
+<a href="/tasks/add">Add Task</a>
+
+<ul>
+  <% tasks.forEach(t => { %>
+    <li>
+      <b><%= t.title %></b> - <%= t.status %>
+
+      <form action="/tasks/status/<%= t.id %>" method="post" style="display:inline">
+        <select name="status" onchange="this.form.submit()">
+          <option value="pending" <%= t.status === "pending" ? "selected" : "" %>>Pending</option>
+          <option value="completed" <%= t.status === "completed" ? "selected" : "" %>>Completed</option>
+        </select>
+      </form>
+
+      | <a href="/tasks/edit/<%= t.id %>">Edit</a>
+
+      <form action="/tasks/delete/<%= t.id %>" method="post" style="display:inline">
+        <button>Delete</button>
+      </form>
+    </li>
+  <% }) %>
+</ul>

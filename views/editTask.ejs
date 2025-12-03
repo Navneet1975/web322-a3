@@ -1,0 +1,12 @@
+<h2>Edit Task</h2>
+
+<form method="post">
+  <input name="title" value="<%= task.title %>" required />
+  <textarea name="description"><%= task.description %></textarea>
+  <input type="date" name="dueDate" value="<%= task.dueDate %>" />
+  <select name="status">
+    <option value="pending" <%= task.status === "pending" ? "selected" : "" %>>Pending</option>
+    <option value="completed" <%= task.status === "completed" ? "selected" : "" %>>Completed</option>
+  </select>
+  <button>Save</button>
+</form>
