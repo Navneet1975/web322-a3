@@ -1,3 +1,5 @@
+const expressLayouts = require("express-ejs-layouts");
+
 const express = require("express");
 const mongoose = require("mongoose");
 const session = require("client-sessions");
